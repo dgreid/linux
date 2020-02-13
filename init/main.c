@@ -762,24 +762,41 @@ asmlinkage __visible void __init start_kernel(void)
 	buffer_init();
 	key_init();
 	security_init();
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 	dbg_late_init();
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 	vfs_caches_init();
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 	pagecache_init();
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 	signals_init();
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 	seq_file_init();
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 	proc_root_init();
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 	nsfs_init();
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 	cpuset_init();
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 	cgroup_init();
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 	taskstats_init_early();
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 	delayacct_init();
 
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 	poking_init();
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 	check_bugs();
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 
 	acpi_subsystem_init();
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 	arch_post_acpi_subsys_init();
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 	sfi_init_late();
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 
 	/* Do the rest non-__init'ed, we're now alive */
 	arch_call_rest_init();

@@ -336,13 +336,16 @@ static void amd_get_topology(struct cpuinfo_x86 *c)
 {
 	u8 node_id;
 	int cpu = smp_processor_id();
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 
 	/* get information required for multi-node processors */
 	if (boot_cpu_has(X86_FEATURE_TOPOEXT)) {
 		int err;
 		u32 eax, ebx, ecx, edx;
 
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 		cpuid(0x8000001e, &eax, &ebx, &ecx, &edx);
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 
 		node_id  = ecx & 0xff;
 
@@ -361,14 +364,18 @@ static void amd_get_topology(struct cpuinfo_x86 *c)
 		 * topology information.
 		 */
 		err = detect_extended_topology(c);
+	pr_info("dg-- %s %d err=%d\n", __func__, __LINE__, err);
 		if (!err)
 			c->x86_coreid_bits = get_count_order(c->x86_max_cores);
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 
 		cacheinfo_amd_init_llc_id(c, cpu, node_id);
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 
 	} else if (cpu_has(c, X86_FEATURE_NODEID_MSR)) {
 		u64 value;
 
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 		rdmsrl(MSR_FAM10H_NODE_ID, value);
 		node_id = value & 7;
 
@@ -376,9 +383,13 @@ static void amd_get_topology(struct cpuinfo_x86 *c)
 	} else
 		return;
 
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 	if (nodes_per_socket > 1) {
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 		set_cpu_cap(c, X86_FEATURE_AMD_DCM);
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 		legacy_fixup_core_id(c);
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 	}
 }
 
@@ -905,15 +916,18 @@ static void init_amd_zn(struct cpuinfo_x86 *c)
 static void init_amd(struct cpuinfo_x86 *c)
 {
 	early_init_amd(c);
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 
 	/*
 	 * Bit 31 in normal CPUID used for nonstandard 3DNow ID;
 	 * 3DNow is IDd by bit 31 in extended CPUID (1*32+31) anyway
 	 */
 	clear_cpu_cap(c, 0*32+31);
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 
 	if (c->x86 >= 0x10)
 		set_cpu_cap(c, X86_FEATURE_REP_GOOD);
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 
 	/* get apicid instead of initial apic id from cpuid */
 	c->apicid = hard_smp_processor_id();
@@ -921,6 +935,7 @@ static void init_amd(struct cpuinfo_x86 *c)
 	/* K6s reports MCEs but don't actually have all the MSRs */
 	if (c->x86 < 6)
 		clear_cpu_cap(c, X86_FEATURE_MCE);
+	pr_info("dg-- %s %d x86 = %x\n", __func__, __LINE__, c->x86);
 
 	switch (c->x86) {
 	case 4:    init_amd_k5(c); break;
@@ -933,6 +948,7 @@ static void init_amd(struct cpuinfo_x86 *c)
 	case 0x16: init_amd_jg(c); break;
 	case 0x17: init_amd_zn(c); break;
 	}
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 
 	/*
 	 * Enable workaround for FXSAVE leak on CPUs
@@ -940,14 +956,20 @@ static void init_amd(struct cpuinfo_x86 *c)
 	 */
 	if ((c->x86 >= 6) && (!cpu_has(c, X86_FEATURE_XSAVEERPTR)))
 		set_cpu_bug(c, X86_BUG_FXSAVE_LEAK);
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 
 	cpu_detect_cache_sizes(c);
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 
 	amd_detect_cmp(c);
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 	amd_get_topology(c);
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 	srat_detect_node(c);
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 
 	init_amd_cacheinfo(c);
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 
 	if (cpu_has(c, X86_FEATURE_XMM2)) {
 		/*
@@ -962,6 +984,7 @@ static void init_amd(struct cpuinfo_x86 *c)
 		/* A serializing LFENCE stops RDTSC speculation */
 		set_cpu_cap(c, X86_FEATURE_LFENCE_RDTSC);
 	}
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 
 	/*
 	 * Family 0x12 and above processors have APIC timer
@@ -969,15 +992,18 @@ static void init_amd(struct cpuinfo_x86 *c)
 	 */
 	if (c->x86 > 0x11)
 		set_cpu_cap(c, X86_FEATURE_ARAT);
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 
 	/* 3DNow or LM implies PREFETCHW */
 	if (!cpu_has(c, X86_FEATURE_3DNOWPREFETCH))
 		if (cpu_has(c, X86_FEATURE_3DNOW) || cpu_has(c, X86_FEATURE_LM))
 			set_cpu_cap(c, X86_FEATURE_3DNOWPREFETCH);
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 
 	/* AMD CPUs don't reset SS attributes on SYSRET, Xen does. */
 	if (!cpu_has(c, X86_FEATURE_XENPV))
 		set_cpu_bug(c, X86_BUG_SYSRET_SS_ATTRS);
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 }
 
 #ifdef CONFIG_X86_32

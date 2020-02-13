@@ -637,12 +637,15 @@ static int find_num_cache_leaves(struct cpuinfo_x86 *c)
 	else
 		op = 4;
 
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
+	// TODO(dgreid) - this loops forever.
 	do {
 		++i;
 		/* Do cpuid(op) loop to find out num_cache_leaves */
 		cpuid_count(op, i, &eax, &ebx, &ecx, &edx);
 		cache_eax.full = eax;
 	} while (cache_eax.split.type != CTYPE_NULL);
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 	return i;
 }
 
@@ -654,16 +657,19 @@ void cacheinfo_amd_init_llc_id(struct cpuinfo_x86 *c, int cpu, u8 node_id)
 	 */
 	if (!cpuid_edx(0x80000006))
 		return;
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 
 	if (c->x86 < 0x17) {
 		/* LLC is at the node level. */
 		per_cpu(cpu_llc_id, cpu) = node_id;
 	} else if (c->x86 == 0x17 && c->x86_model <= 0x1F) {
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 		/*
 		 * LLC is at the core complex level.
 		 * Core complex ID is ApicId[3] for these processors.
 		 */
 		per_cpu(cpu_llc_id, cpu) = c->apicid >> 3;
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 	} else {
 		/*
 		 * LLC ID is calculated from the number of threads sharing the
@@ -672,14 +678,19 @@ void cacheinfo_amd_init_llc_id(struct cpuinfo_x86 *c, int cpu, u8 node_id)
 		u32 eax, ebx, ecx, edx, num_sharing_cache = 0;
 		u32 llc_index = find_num_cache_leaves(c) - 1;
 
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 		cpuid_count(0x8000001d, llc_index, &eax, &ebx, &ecx, &edx);
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 		if (eax)
 			num_sharing_cache = ((eax >> 14) & 0xfff) + 1;
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 
 		if (num_sharing_cache) {
 			int bits = get_count_order(num_sharing_cache);
 
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 			per_cpu(cpu_llc_id, cpu) = c->apicid >> bits;
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 		}
 	}
 }

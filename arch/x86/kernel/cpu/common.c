@@ -1449,14 +1449,18 @@ static void identify_cpu(struct cpuinfo_x86 *c)
 #endif
 	c->x86_cache_alignment = c->x86_clflush_size;
 	memset(&c->x86_capability, 0, sizeof(c->x86_capability));
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 
 	generic_identify(c);
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 
 	if (this_cpu->c_identify)
 		this_cpu->c_identify(c);
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 
 	/* Clear/Set all flags overridden by options, after probe */
 	apply_forced_caps(c);
+	pr_info("dg-- %s %d %px\n", __func__, __LINE__, this_cpu->c_init);
 
 #ifdef CONFIG_X86_64
 	c->apicid = apic->phys_pkg_id(c->initial_apicid, 0);
@@ -1475,13 +1479,18 @@ static void identify_cpu(struct cpuinfo_x86 *c)
 	if (this_cpu->c_init)
 		this_cpu->c_init(c);
 
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 	/* Disable the PN if appropriate */
 	squash_the_stupid_serial_number(c);
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 
 	/* Set up SMEP/SMAP/UMIP */
 	setup_smep(c);
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 	setup_smap(c);
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 	setup_umip(c);
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 
 	/*
 	 * The vendor-specific functions might have changed features.
@@ -1490,6 +1499,7 @@ static void identify_cpu(struct cpuinfo_x86 *c)
 
 	/* Filter out anything that depends on CPUID levels we don't have */
 	filter_cpuid_features(c, true);
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 
 	/* If the model name is still unset, do table lookup. */
 	if (!c->x86_model_id[0]) {
@@ -1502,20 +1512,26 @@ static void identify_cpu(struct cpuinfo_x86 *c)
 			sprintf(c->x86_model_id, "%02x/%02x",
 				c->x86, c->x86_model);
 	}
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 
 #ifdef CONFIG_X86_64
 	detect_ht(c);
 #endif
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 
 	x86_init_rdrand(c);
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 	x86_init_cache_qos(c);
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 	setup_pku(c);
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 
 	/*
 	 * Clear/Set all flags overridden by options, need do it
 	 * before following smp all cpus cap AND.
 	 */
 	apply_forced_caps(c);
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 
 	/*
 	 * On SMP, boot_cpu_data holds the common feature set between
@@ -1532,15 +1548,19 @@ static void identify_cpu(struct cpuinfo_x86 *c)
 		for (i = NCAPINTS; i < NCAPINTS + NBUGINTS; i++)
 			c->x86_capability[i] |= boot_cpu_data.x86_capability[i];
 	}
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 
 	/* Init Machine Check Exception if available. */
 	mcheck_cpu_init(c);
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 
 	select_idle_routine(c);
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 
 #ifdef CONFIG_NUMA
 	numa_add_cpu(smp_processor_id());
 #endif
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 }
 
 /*
@@ -1575,15 +1595,22 @@ void enable_sep_cpu(void)
 
 void __init identify_boot_cpu(void)
 {
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 	identify_cpu(&boot_cpu_data);
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 #ifdef CONFIG_X86_32
 	sysenter_setup();
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 	enable_sep_cpu();
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 #endif
 	cpu_detect_tlb(&boot_cpu_data);
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 	setup_cr_pinning();
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 
 	tsx_init();
+	pr_info("dg-- %s %d\n", __func__, __LINE__);
 }
 
 void identify_secondary_cpu(struct cpuinfo_x86 *c)
