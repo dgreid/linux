@@ -1172,11 +1172,18 @@ static long do_sys_openat2(int dfd, const char __user *filename,
 			   struct open_how *how)
 {
 	struct open_flags op;
-	int fd = build_open_flags(how, &op);
+	struct fd dir;
+	int fd;
 	struct filename *tmp;
 
+	fd = build_open_flags(how, &op);
 	if (fd)
 		return fd;
+
+	dir = fdget_raw(dfd);
+	if (dir.flags & FD_LOOKUP_BENEATH)
+		op.lookup_flags |= LOOKUP_BENEATH;
+	fdput(dir);
 
 	tmp = getname(filename);
 	if (IS_ERR(tmp))
@@ -1194,6 +1201,10 @@ static long do_sys_openat2(int dfd, const char __user *filename,
 		}
 	}
 	putname(tmp);
+
+	dir = fdget_raw(fd);
+	dir.flags |= FD_LOOKUP_BENEATH;
+	fdput(dir);
 	return fd;
 }
 

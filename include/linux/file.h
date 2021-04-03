@@ -39,6 +39,7 @@ struct fd {
 };
 #define FDPUT_FPUT       1
 #define FDPUT_POS_UNLOCK 2
+#define FD_LOOKUP_BENEATH 4
 
 static inline void fdput(struct fd fd)
 {
