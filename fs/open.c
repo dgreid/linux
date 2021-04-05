@@ -1172,18 +1172,11 @@ static long do_sys_openat2(int dfd, const char __user *filename,
 			   struct open_how *how)
 {
 	struct open_flags op;
-	struct fd dir;
-	int fd;
+	int fd = build_open_flags(how, &op);
 	struct filename *tmp;
 
-	fd = build_open_flags(how, &op);
 	if (fd)
 		return fd;
-
-	dir = fdget_raw(dfd);
-	if (dir.flags & FD_LOOKUP_BENEATH)
-		op.lookup_flags |= LOOKUP_BENEATH;
-	fdput(dir);
 
 	tmp = getname(filename);
 	if (IS_ERR(tmp))
@@ -1201,10 +1194,46 @@ static long do_sys_openat2(int dfd, const char __user *filename,
 		}
 	}
 	putname(tmp);
+	return fd;
+}
 
-	dir = fdget_raw(fd);
-	dir.flags |= FD_LOOKUP_BENEATH;
-	fdput(dir);
+static long do_sys_cropenat(int dfd, const char __user *filename,
+			   struct open_how *how)
+{
+	struct open_flags op;
+	int fd;
+	struct filename *tmp;
+
+	// In the capability mode, there is never a reason to use the working
+	// directory as the mount namespace is empty.
+	if (dfd == AT_FDCWD)
+		return -EINVAL;
+
+	fd = build_open_flags(how, &op);
+	if (fd)
+		return fd;
+
+	tmp = getname(filename);
+	if (IS_ERR(tmp))
+		return PTR_ERR(tmp);
+
+	// Behave like notmal openat2, but force restrictions on.
+	op.lookup_flags |= LOOKUP_BENEATH |
+			   LOOKUP_NO_MAGICLINKS |
+			   LOOKUP_NO_XDEV;
+
+	fd = get_unused_fd_flags(how->flags);
+	if (fd >= 0) {
+		struct file *f = do_filp_open(dfd, tmp, &op);
+		if (IS_ERR(f)) {
+			put_unused_fd(fd);
+			fd = PTR_ERR(f);
+		} else {
+			fsnotify_open(f);
+			fd_install(fd, f);
+		}
+	}
+	putname(tmp);
 	return fd;
 }
 
@@ -1251,6 +1280,29 @@ SYSCALL_DEFINE4(openat2, int, dfd, const char __user *, filename,
 		tmp.flags |= O_LARGEFILE;
 
 	return do_sys_openat2(dfd, filename, &tmp);
+}
+
+SYSCALL_DEFINE4(cropenat, int, dfd, const char __user *, filename,
+		struct open_how __user *, how, size_t, usize)
+{
+	int err;
+	struct open_how tmp;
+
+	BUILD_BUG_ON(sizeof(struct open_how) < OPEN_HOW_SIZE_VER0);
+	BUILD_BUG_ON(sizeof(struct open_how) != OPEN_HOW_SIZE_LATEST);
+
+	if (unlikely(usize < OPEN_HOW_SIZE_VER0))
+		return -EINVAL;
+
+	err = copy_struct_from_user(&tmp, sizeof(tmp), how, usize);
+	if (err)
+		return err;
+
+	/* O_LARGEFILE is only allowed for non-O_PATH. */
+	if (!(tmp.flags & O_PATH) && force_o_largefile())
+		tmp.flags |= O_LARGEFILE;
+
+	return do_sys_cropenat(dfd, filename, &tmp);
 }
 
 #ifdef CONFIG_COMPAT
