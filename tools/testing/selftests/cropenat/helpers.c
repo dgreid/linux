@@ -25,6 +25,29 @@ int sys_cropenat(int dfd, const char *path, struct open_how *how)
 	return raw_cropenat(dfd, path, how, sizeof(*how));
 }
 
+bool fdequal(int fd, int dfd, const char *path)
+{
+	char *fdpath, *dfdpath, *other;
+	bool cmp;
+
+	fdpath = fdreadlink(fd);
+	dfdpath = fdreadlink(dfd);
+
+	if (!path)
+		E_asprintf(&other, "%s", dfdpath);
+	else if (*path == '/')
+		E_asprintf(&other, "%s", path);
+	else
+		E_asprintf(&other, "%s/%s", dfdpath, path);
+
+	cmp = !strcmp(fdpath, other);
+
+	free(fdpath);
+	free(dfdpath);
+	free(other);
+	return cmp;
+}
+
 char *fdreadlink(int fd)
 {
 	char *target, *tmp;
@@ -39,6 +62,14 @@ char *fdreadlink(int fd)
 	E_readlink(tmp, target, PATH_MAX);
 	free(tmp);
 	return target;
+}
+
+int touchat(int dfd, const char *path)
+{
+	int fd = openat(dfd, path, O_CREAT, 0700);
+	if (fd >= 0)
+		close(fd);
+	return fd;
 }
 
 bool cropenat_supported = false;

@@ -94,7 +94,9 @@ bool needs_cropenat(const struct open_how *how);
 int raw_cropenat(int dfd, const char *path, void *how, size_t size);
 int sys_cropenat(int dfd, const char *path, struct open_how *how);
 
+bool fdequal(int fd, int dfd, const char *path);
 char *fdreadlink(int fd);
+int touchat(int dfd, const char *path);
 
 extern bool cropenat_supported;
 
